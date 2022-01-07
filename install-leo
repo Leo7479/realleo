@@ -1,0 +1,20 @@
+#! /bin/bash
+if (($UID==0))
+then
+	apt update
+	clear
+	apt install figlet lolcat aircrack-ng 
+	clear
+	echo "Please Wait ..."
+	chmod +x ./realleo
+	echo "<------------------------------------------------------------------------------------------------------------------------------------------>"
+	echo "All Dependencies are installed and all programs are active now. Please run the following command in the terminal as a superuser : './Leo.sh'" 
+	echo "<------------------------------------------------------------------------------------------------------------------------------------------>"
+	read -p "press any key to exit" exitkey
+	case $exitkey in
+		*) exit;; 
+	esac
+fi
+if (($UID!=0))
+then echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx[Run the program as Root]xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+fi
